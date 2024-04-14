@@ -118,8 +118,8 @@ void loop() {
   // Retrieving the distance of the robot from the obstacle.
   distance = get_distance();
 
-  // Calling the obstacle avoidance function.
-  obstacle_avoidance();
+  // Calling the obstacle detection function.
+  obstacle_detection();
 }
 
 int get_speed(uint8_t speed)
@@ -138,108 +138,17 @@ int get_speed(uint8_t speed)
   return speed;
 }
 
-void scan_and_evade_obstacle()
+void obstacle_detection()
 {
-  /* Function to scan the environment for obstacles and evade them.
-  */
-  // First Stopping the robot from moving.
-  stop_move();
-
-  /* Iterating through the servo positions to scan the environment for obstacles.
-    Parameters: 
-        i: Position angle of the servo.
-
-    Iterating from 1 to 6 with a step size of 2.
-
-    Iteration Angles:
-        1: 30 degrees.
-        3. 90 degrees.
-        5. 150 degrees.
-  
-  */
-  for (uint8_t i = 1; i < 6; i += 2) //1、3、5 Omnidirectional detection of obstacle avoidance status
-  {
-    // Setting the servo to point in the direction of the obstacle.
-    AppServo.DeviceDriverSet_Servo_control(30 * i /* Position angle of the servo */);
-
-    // Retrieving the distance of the robot from the obstacle.
-    distance = get_distance();
-
-    // If there is no obstacle in front of the robot then stop the robot from moving.
-    if (is_obstacle(distance_threshold))
-    {
-      stop_move();
-      
-      // If 5th scan, i.e., 150 degrees, then move the robot backward and turn left or right based on a random number.
-      if (i == 5)
-      {
-        // Going backward.
-        bwd(get_speed(current_speed), get_speed(current_speed));
-        delay(500);
-
-        // Based on a random number, move the robot either left or right.
-        if (random(0, 2) == 0)
-        {
-          // Going right.
-          fwd(get_speed(current_speed), get_speed(0));;
-        }
-        else
-        {
-          // Going left.
-          fwd(get_speed(0), get_speed(current_speed));
-        }
-        break;
-      }
-    }
-    else{
-      // First going little backward.
-      bwd(get_speed(current_speed), get_speed(current_speed));
-      delay(500);
-
-      /* Performing switch statement for Obstacle Avoidance.
-
-        Parameters: 
-            i: Position angle of the servo.
-
-        Cases:
-            1: Going Right.
-            3: Going Forward.
-            5: Going Left.
-      */
-      switch (i)
-      {
-        case 1:
-          // Going Right.
-          fwd(get_speed(current_speed), get_speed(0));
-        case 3:
-          // Going Forward.
-          fwd(get_speed(current_speed), get_speed(current_speed));
-        case 5:
-          // Going Left.
-          fwd(get_speed(0), get_speed(current_speed));
-      }
-
-      // Delay for 50 milliseconds.
-      delay(50);
-      break;
-    }
-  }
-
-  // Setting the servo to point directly forward.
-  AppServo.DeviceDriverSet_Servo_control(90);
-}
-
-void obstacle_avoidance()
-{
-  /* Function to avoid obstacles.
+  /* Function to detect obstacles in front of the robot and move the robot accordingly.
     Parameters: 
         distance: Distance of the robot from the obstacle.
   */
   // If there is an obstacle in front of the robot.
   if (is_obstacle(distance_threshold))
   {
-    // Scan the environment for obstacles.
-    scan_and_evade_obstacle();
+    //  Stop the robot.
+    stop_move();
   }
   // Otherwise, move the robot forward.
   else
