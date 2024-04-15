@@ -36,9 +36,16 @@ long duration, distance;
 // Declaring the distance threshold.
 int distance_threshold = 20;
 
-// Declaring max and min distance.
-int max_distance = 0;
-int min_distance = 1000;
+// Declaring Infrared Sensor Variables.
+int left_sensor = 0;
+int middle_sensor = 0;
+int right_sensor = 0;
+
+// Declaring variable to hold the perpendicular distance.
+bool start = false;
+bool stop = false;
+float start_times = 0;
+float end_times = 0;
 
 
 void setup() {
@@ -109,6 +116,8 @@ void setup() {
   // Calibrating the accelegyro sensor.
   AppMPU6050getdata.MPU6050_calibration();
 
+  // Setting distance to a high value.
+  distance = 1000;
 }
 
 void loop() {
@@ -116,62 +125,79 @@ void loop() {
   float newAngle;
   AppMPU6050getdata.MPU6050_dveGetEulerAngles(&newAngle);
 
-  // Retrieving the distance of the robot from the obstacle.
-  distance = get_distance();
+  // Retrieving the data from the infrared sensors.
+  get_infrared_sensor_data();
 
-  // Updating the maximum and minimum distance.
-  if (distance > max_distance)
-  {
-    max_distance = distance;
+  // Calculating the perpendicular distance of the robot from the obstacle.
+  calculate_perpendicular_distance();
+
+  if (!stop){
+    // Moving the robot forward.
+    fwd(get_speed(current_speed), get_speed(current_speed));
   }
-  if (distance < min_distance)
-  {
-    min_distance = distance;
+  else{
+    // Stopping the robot.
+    stop_move();
   }
-
-  // Determining the Sensor's Field of View and the sensor angle.
-  int sensor_angle = 0;
-  int sensor_fov = 0;
-
-  // Calculating the sensor angle.
-  sensor_angle = (TrackingDetection_E - TrackingDetection_S) / 2;
-
-  // Calculating the sensor field of view.
-  sensor_fov = TrackingDetection_E - TrackingDetection_S;
-
-  // Displaying the sensor angle and field of view.
-  Serial.println("Sensor Angle: " + String(sensor_angle));
-  Serial.println("Sensor FOV: " + String(sensor_fov));
-
-  Serial.print(sensor_angle);
-  Serial.print(" ");
-  Serial.print(sensor_fov);
-  Serial.print(" ");
-
-  // Retrieving the tracking sensor values.
-  int left_sensor = analogRead(trigPin);
-  int middle_sensor = analogRead(echoPin);
-
-  // Displaying the tracking sensor values.
-  Serial.println("Trigger Pin: " + String(left_sensor));
-  Serial.println("Echo Pin: " + String(middle_sensor));
-
-  Serial.print(left_sensor);
-  Serial.print(" ");
-  Serial.print(middle_sensor);
-  Serial.print(" ");
-
-  // Displaying the maximum and minimum distance of the robot from the obstacle.
-  Serial.println("Max Distance: " + String(max_distance) + " cm");
-  Serial.println("Min Distance: " + String(min_distance) + " cm");
-
-  Serial.print(max_distance);
-  Serial.print(" ");
-  Serial.print(min_distance);
-  Serial.println();  // end the line
 
   // Delaying the loop by 100 milliseconds.
   delay(100);
+}
+
+void calculate_perpendicular_distance()
+{
+  /* Function to calculate the perpendicular distance of the robot from the obstacle.
+  */
+  // Checking if all the sensors are on the line.
+  if (left_sensor > TrackingDetection_S && middle_sensor > TrackingDetection_S && right_sensor > TrackingDetection_S)
+  {
+    if (!start){
+      // If the robot is on the line, set the start flag to true.
+      start = true;
+
+      // Retrieving the start time.
+      start_times = millis();
+    }
+    else{
+      // If the robot is not on the line, set the start flag to false.
+      start = false;
+
+      // Retrieving the end time.
+      end_times = millis();
+
+      // Calculating the time difference.
+      float time_diff = end_times - start_times;
+
+      // Calculating the perpendicular distance of the robot from the obstacle (distance = speed * time)
+      float perpendicular_distance = time_diff * current_speed;
+
+      // Changing the distance to cm (from mm).
+      perpendicular_distance = perpendicular_distance / 1000;
+
+      // Setting the stop flag to true.
+      stop = true;
+
+      // Printing the perpendicular distance to the serial monitor.
+      Serial.print("Perpendicular Distance: ");
+      Serial.println(perpendicular_distance);
+    }
+  }
+}
+
+bool is_obstacle(uint8_t distance_threshold)
+{
+  /* Function to check if there is an obstacle in front of the robot.
+    Parameters: 
+        distance: Distance of the robot from the obstacle.
+  */
+  // If the distance of the robot from the obstacle is less than 20 cm, return true.
+  if (distance < distance_threshold)
+  {
+    return true;
+  }
+
+  // Otherwise, return false.
+  return false;
 }
 
 int get_distance()
@@ -199,6 +225,24 @@ int get_distance()
   return distance;
 }
 
+void get_infrared_sensor_data()
+{
+  /* Function to get the data from the infrared sensors.
+    Variables:
+      left_sensor: Data from the left tracking sensor.
+      middle_sensor: Data from the middle tracking sensor.
+      right_sensor: Data from the right tracking sensor.
+  */
+  // Reading the data from the left tracking sensor.
+  left_sensor = analogRead(PIN_ITR20001xxxL);
+
+  // Reading the data from the middle tracking sensor.
+  middle_sensor = analogRead(PIN_ITR20001xxxM);
+
+  // Reading the data from the right tracking sensor.
+  right_sensor = analogRead(PIN_ITR20001xxxR);
+}
+
 int get_speed(uint8_t speed)
 {
   /* Function to get the speed of the robot.
@@ -214,7 +258,6 @@ int get_speed(uint8_t speed)
   // Return the speed.
   return speed;
 }
-
 
 void fwd(uint8_t right_motor_speed, uint8_t left_motor_speed)
 {
@@ -239,73 +282,6 @@ void fwd(uint8_t right_motor_speed, uint8_t left_motor_speed)
   digitalWrite(PIN_Motor_STBY, HIGH);
 }
 
-void right_fwd(uint8_t right_motor_speed)
-{
-  /* Function to move the robot right forward.
-   Parameters: 
-      right_motor_speed: Speed for the right pair of motors.
-      left_motor_speed: Speed for the left pair of motors.
-
-    Digital signals:
-      HIGH: represents the digital signal of 1.
-      LOW: represents the digital signal of 0.
-  */
-  // Setting the direction of the motors.
-  digitalWrite(PIN_Motor_AIN_1, HIGH);
-  digitalWrite(PIN_Motor_BIN_1, HIGH);
-
-  // Setting the speed of the motors.
-  analogWrite(PIN_Motor_PWMA, right_motor_speed);
-
-  // Enabling the motors.
-  digitalWrite(PIN_Motor_STBY, HIGH);
-}
-
-void left_fwd(uint8_t left_motor_speed)
-{
-  /* Function to move the robot left forward.
-   Parameters: 
-      right_motor_speed: Speed for the right pair of motors.
-      left_motor_speed: Speed for the left pair of motors.
-
-    Digital signals:
-      HIGH: represents the digital signal of 1.
-      LOW: represents the digital signal of 0.
-  */
-  // Setting the direction of the motors.
-  digitalWrite(PIN_Motor_AIN_1, HIGH);
-  digitalWrite(PIN_Motor_BIN_1, HIGH);
-
-  // Setting the speed of the motors.
-  analogWrite(PIN_Motor_PWMB, left_motor_speed);
-
-  // Enabling the motors.
-  digitalWrite(PIN_Motor_STBY, HIGH);
-}
-
-void spin(uint8_t right_motor_speed, uint8_t left_motor_speed)
-{
-  /* Function to make the robot spin on its own axis.
-    Parameters: 
-        right_motor_speed: Speed for the right pair of motors.
-        left_motor_speed: Speed for the left pair of motors.
-  
-      Digital signals:
-        HIGH: represents the digital signal of 1.
-        LOW: represents the digital signal of 0.
-  */
-  // Setting the direction of the motors.
-  digitalWrite(PIN_Motor_AIN_1, LOW);
-  digitalWrite(PIN_Motor_BIN_1, HIGH);
-
-  // Setting the speed of the motors.
-  analogWrite(PIN_Motor_PWMA, right_motor_speed);
-  analogWrite(PIN_Motor_PWMB, left_motor_speed);
-
-  // Enabling the motors.
-  digitalWrite(PIN_Motor_STBY, HIGH);
-}
-
 void bwd(uint8_t right_motor_speed, uint8_t left_motor_speed)
 {
   /* Function to move the robot backward.
@@ -323,50 +299,6 @@ void bwd(uint8_t right_motor_speed, uint8_t left_motor_speed)
 
   // Setting the speed of the motors.
   analogWrite(PIN_Motor_PWMA, right_motor_speed);
-  analogWrite(PIN_Motor_PWMB, left_motor_speed);
-
-  // Enabling the motors.
-  digitalWrite(PIN_Motor_STBY, HIGH);
-}
-
-void right_bwd(uint8_t right_motor_speed)
-{
-  /* Function to move the robot right backward.
-    Parameters: 
-        right_motor_speed: Speed for the right pair of motors.
-        left_motor_speed: Speed for the left pair of motors.
-  
-      Digital signals:
-        HIGH: represents the digital signal of 1.
-        LOW: represents the digital signal of 0.
-  */
-  // Setting the direction of the motors.
-  digitalWrite(PIN_Motor_AIN_1, LOW);
-  digitalWrite(PIN_Motor_BIN_1, LOW);
-
-  // Setting the speed of the motors.
-  analogWrite(PIN_Motor_PWMA, right_motor_speed);
-
-  // Enabling the motors.
-  digitalWrite(PIN_Motor_STBY, HIGH);
-}
-
-void left_bwd(uint8_t left_motor_speed)
-{
-  /* Function to move the robot left backward.
-    Parameters: 
-        right_motor_speed: Speed for the right pair of motors.
-        left_motor_speed: Speed for the left pair of motors.
-  
-      Digital signals:
-        HIGH: represents the digital signal of 1.
-        LOW: represents the digital signal of 0.
-  */
-  // Setting the direction of the motors.
-  digitalWrite(PIN_Motor_AIN_1, LOW);
-  digitalWrite(PIN_Motor_BIN_1, LOW);
-
-  // Setting the speed of the motors.
   analogWrite(PIN_Motor_PWMB, left_motor_speed);
 
   // Enabling the motors.
