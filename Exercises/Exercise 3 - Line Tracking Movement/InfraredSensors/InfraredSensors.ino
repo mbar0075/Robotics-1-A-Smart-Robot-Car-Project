@@ -113,20 +113,20 @@ void loop() {
   // Retrieving the data from the infrared sensors.
   get_infrared_sensor_data();
 
-  // Printing the sensor data to the serial monitor.
-  // Serial.print("Left Sensor: ");
-  // Serial.print(left_sensor);
-  // Serial.print(" Middle Sensor: ");
-  // Serial.print(middle_sensor);
-  // Serial.print(" Right Sensor: ");
-  // Serial.println(right_sensor);
-
-  // Displaying the sensor values (Serial Plotter).
+  Printing the sensor data to the serial monitor.
+  Serial.print("Left Sensor: ");
   Serial.print(left_sensor);
-  Serial.print(" ");
+  Serial.print(" Middle Sensor: ");
   Serial.print(middle_sensor);
-  Serial.print(" ");
-  Serial.println(right_sensor);  // end the line
+  Serial.print(" Right Sensor: ");
+  Serial.println(right_sensor);
+
+  // // Displaying the sensor values (Serial Plotter).
+  // Serial.print(left_sensor);
+  // Serial.print(" ");
+  // Serial.print(middle_sensor);
+  // Serial.print(" ");
+  // Serial.println(right_sensor);  // end the line
 
   // Delaying the loop by 100 milliseconds.
   delay(100);

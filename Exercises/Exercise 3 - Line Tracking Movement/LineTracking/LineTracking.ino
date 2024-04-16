@@ -69,8 +69,8 @@ void setup() {
   #define PIN_ITR20001xxxL A2
   #define PIN_ITR20001xxxM A1
   #define PIN_ITR20001xxxR A0
-  #define TrackingDetection_S 250
-  #define TrackingDetection_E 850
+  #define TrackingDetection_S 20
+  #define TrackingDetection_E 80
   #define echoPin 12 
   #define trigPin 13
 
@@ -123,16 +123,28 @@ void loop() {
   // Get the infrared sensor data.
   get_infrared_sensor_data();
 
-  if (LS || MS || RS)
-  {
-    // Line Tracking.
-    line_tracking();
-  }
-  else
-  {
-    // Obstacle Avoidance.
-    obstacle_avoidance();
-  }
+  // Printing sensor data.
+  Serial.print("Left Sensor: ");
+  Serial.print(LS);
+  Serial.print(" Analog Value: ");
+  Serial.print(left_sensor);
+  Serial.print(" Middle Sensor: ");
+  Serial.print(MS);
+  Serial.print(" Analog Value: ");
+  Serial.print(middle_sensor);
+  Serial.print(" Right Sensor: ");
+  Serial.println(RS);
+  Serial.print(" Analog Value: ");
+  Serial.println(right_sensor);
+
+  // Line Tracking.
+  line_tracking();
+ 
+  // else
+  // {
+  //   // Obstacle Avoidance.
+  //   obstacle_avoidance();
+  // }
 
   // Delaying the loop by 100 milliseconds.
   delay(100);
@@ -142,22 +154,6 @@ void line_tracking()
 {
   /* Function to track the line.
   */
-  // Retrieving the data from the infrared sensors.
-  get_infrared_sensor_data();
-
-  // Printing sensor data.
-  // Serial.print("Left Sensor: ");
-  // Serial.print(LS);
-  // Serial.print(" Analog Value: ");
-  // Serial.print(left_sensor);
-  // Serial.print(" Middle Sensor: ");
-  // Serial.print(MS);
-  // Serial.print(" Analog Value: ");
-  // Serial.print(middle_sensor);
-  // Serial.print(" Right Sensor: ");
-  // Serial.println(RS);
-  // Serial.print(" Analog Value: ");
-  // Serial.println(right_sensor);
 
   // If the robot is on the line.
   if (LS && MS && RS)
@@ -202,7 +198,7 @@ void line_tracking()
     fwd(get_speed(0), get_speed(current_speed));
   }
   // If the robot is off the line.
-  else if (!LS && !MS && !RS)
+  else
   {
     // Serial.println("Off the line");
     // Stop the robot from moving.
@@ -388,16 +384,16 @@ void get_infrared_sensor_data()
   RS = infrared_sensor_detection(right_sensor, TrackingDetection_S, TrackingDetection_E);
 }
 
-bool infrared_sensor_detection(uint8_t sensor_value, uint8_t small_threshold, uint8_t large_threshold)
+bool infrared_sensor_detection(long sensor_value, long small_threshold, long large_threshold)
 {
   /* Function to detect the infrared sensor.
     Parameters: 
         sensor_value: Value of the sensor.
         small_threshold: Small threshold value.
         large_threshold: Large threshold value.
-  */
+  */ 
   // If the sensor value is within the small and large threshold, return true.
-  if (sensor_value >= small_threshold && sensor_value <= large_threshold)
+  if (small_threshold <= sensor_value && sensor_value <= large_threshold)
   {
     return true;
   }
