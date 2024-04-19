@@ -119,7 +119,7 @@ void loop() {
   distance = get_distance();
 
   // Calling the obstacle avoidance function.
-  obstacle_avoidance();
+  obstacle_racing();
 }
 
 int get_speed(uint8_t speed)
@@ -229,7 +229,7 @@ void scan_and_evade_obstacle()
   AppServo.DeviceDriverSet_Servo_control(90);
 }
 
-void obstacle_avoidance()
+void obstacle_racing()
 {
   /* Function to avoid obstacles.
     Parameters: 

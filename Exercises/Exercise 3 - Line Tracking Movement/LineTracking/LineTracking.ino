@@ -297,7 +297,7 @@ void scan_and_evade_obstacle()
   AppServo.DeviceDriverSet_Servo_control(90);
 }
 
-void obstacle_avoidance()
+void obstacle_racing()
 {
   /* Function to avoid obstacles.
     Parameters: 
