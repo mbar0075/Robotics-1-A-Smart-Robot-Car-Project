@@ -113,6 +113,12 @@ obstacles. It is essential to underscore that these limitations primarily origin
 </table>
 </p>
 
+<p align='center'>
+
+https://github.com/mbar0075/Robotics-1-A-Smart-Robot-Car-Project/assets/103250564/ea0a58f1-35f8-4f7f-b35e-270eb59dc190
+
+</p>
+
 ## Obstacle Avoidance Experiment
 
 <p align="justify">
@@ -135,4 +141,10 @@ detection set at 20 units to afford the robot ample time for halting, reversing,
     </td>
   </tr>
 </table>
+</p>
+
+<p align='center'>
+
+https://github.com/mbar0075/Robotics-1-A-Smart-Robot-Car-Project/assets/103250564/a2ee47f7-19a6-4ccb-abd4-824e7d86d832
+
 </p>
